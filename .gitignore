@@ -22,3 +22,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+components/Planets.jsx
+components/Planet.jsx
