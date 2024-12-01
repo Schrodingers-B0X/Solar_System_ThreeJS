@@ -19,13 +19,12 @@ export default defineConfig({
                     } else if (chunkInfo.name.includes('three')) {
                         return 'js/solar/depends/three.js';
                     }
-                    return `js/solar/[name].js`;
+                    return `js/solar/solar.js`;
                 },
                 assetFileNames: ({ name, type }) => {
-					console.log({ name, type });
                     if (name.endsWith('.css')) {
                         // Use the original name for CSS files
-                        return `css/${name}`;
+                        return `css/solar.css`;
                     }
 				return `${asset}/${name}`;
                 },
