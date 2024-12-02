@@ -13,6 +13,7 @@ dist-ssr
 *.local
 
 # Editor directories and files
+.ignore/*
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,5 +23,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-components/Planets.jsx
-components/Planet.jsx
