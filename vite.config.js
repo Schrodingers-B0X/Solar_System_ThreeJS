@@ -1,52 +1,250 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import glsl from 'vite-plugin-glsl';
+import { dependencies, devDependencies } from './package.json';
+
+// List of node_modules folders to exclude
+const excludedPackages = [
+  "acorn",
+  "acorn-jsx",
+  "ajv",
+  "ansi-regex",
+  "ansi-styles",
+  "argparse",
+  "array-buffer-byte-length",
+  "array-includes",
+  "array.prototype.findlast",
+  "array.prototype.flat",
+  "array.prototype.flatmap",
+  "array.prototype.tosorted",
+  "arraybuffer.prototype.slice",
+  "available-typed-arrays",
+  "balanced-match",
+  "brace-expansion",
+  "browserslist",
+  "call-bind",
+  "callsites",
+  "caniuse-lite",
+  "chalk",
+  "color-convert",
+  "color-name",
+  "concat-map",
+  "convert-source-map",
+  "data-view-buffer",
+  "data-view-byte-length",
+  "data-view-byte-offset",
+  "debug",
+  "deep-is",
+  "define-data-property",
+  "define-properties",
+  "doctrine",
+  "electron-to-chromium",
+  "es-abstract",
+  "es-define-property",
+  "es-errors",
+  "es-iterator-helpers",
+  "es-object-atoms",
+  "es-set-tostringtag",
+  "es-shim-unscopables",
+  "es-to-primitive",
+  "esbuild",
+  "escalade",
+  "escape-string-regexp",
+  "eslint",
+  "eslint-plugin-react",
+  "eslint-plugin-react-hooks",
+  "eslint-plugin-react-refresh",
+  "eslint-scope",
+  "eslint-visitor-keys",
+  "espree",
+  "esquery",
+  "esrecurse",
+  "estraverse",
+  "estree-walker",
+  "esutils",
+  "fast-deep-equal",
+  "fast-json-stable-stringify",
+  "fast-levenshtein",
+  "fastq",
+  "file-entry-cache",
+  "find-up",
+  "flat-cache",
+  "flatted",
+  "for-each",
+  "fs.realpath",
+  "function-bind",
+  "function.prototype.name",
+  "functions-have-names",
+  "gensync",
+  "get-intrinsic",
+  "get-symbol-description",
+  "glob",
+  "glob-parent",
+  "globals",
+  "globalthis",
+  "gopd",
+  "graphemer",
+  "has-bigints",
+  "has-flag",
+  "has-property-descriptors",
+  "has-proto",
+  "has-symbols",
+  "has-tostringtag",
+  "hasown",
+  "ignore",
+  "import-fresh",
+  "imurmurhash",
+  "inflight",
+  "inherits",
+  "internal-slot",
+  "is-array-buffer",
+  "is-async-function",
+  "is-bigint",
+  "is-boolean-object",
+  "is-callable",
+  "is-core-module",
+  "is-data-view",
+  "is-date-object",
+  "is-extglob",
+  "is-finalizationregistry",
+  "is-generator-function",
+  "is-glob",
+  "is-map",
+  "is-negative-zero",
+  "is-number-object",
+  "is-path-inside",
+  "is-regex",
+  "is-set",
+  "is-shared-array-buffer",
+  "is-string",
+  "is-symbol",
+  "is-typed-array",
+  "is-weakmap",
+  "is-weakref",
+  "is-weakset",
+  "isarray",
+  "iterator.prototype",
+  "js-yaml",
+  "jsesc",
+  "json-buffer",
+  "json-schema-traverse",
+  "json-stable-stringify-without-jsonify",
+  "json5",
+  "jsx-ast-utils",
+  "keyv",
+  "levn",
+  "locate-path",
+  "lodash.merge",
+  "lru-cache",
+  "minimatch",
+  "ms",
+  "nanoid",
+  "natural-compare",
+  "node-releases",
+  "object-inspect",
+  "object-keys",
+  "object.assign",
+  "object.entries",
+  "object.fromentries",
+  "object.values",
+  "once",
+  "optionator",
+  "p-limit",
+  "p-locate",
+  "parent-module",
+  "path-exists",
+  "path-is-absolute",
+  "path-parse",
+  "picocolors",
+  "picomatch",
+  "possible-typed-array-names",
+  "postcss",
+  "prelude-ls",
+  "punycode",
+  "queue-microtask",
+  "react-refresh",
+  "reflect.getprototypeof",
+  "regexp.prototype.flags",
+  "resolve",
+  "resolve-from",
+  "reusify",
+  "rimraf",
+  "rollup",
+  "run-parallel",
+  "safe-array-concat",
+  "safe-regex-test",
+  "semver",
+  "set-function-length",
+  "set-function-name",
+  "side-channel",
+  "source-map-js",
+  "string.prototype.matchall",
+  "string.prototype.repeat",
+  "string.prototype.trim",
+  "string.prototype.trimend",
+  "string.prototype.trimstart",
+  "strip-ansi",
+  "strip-json-comments",
+  "supports-color",
+  "supports-preserve-symlinks-flag",
+  "text-table",
+  "type-check",
+  "type-fest",
+  "typed-array-buffer",
+  "typed-array-byte-length",
+  "typed-array-byte-offset",
+  "typed-array-length",
+  "unbox-primitive",
+  "update-browserslist-db",
+  "uri-js",
+  "vite",
+  "vite-plugin-glsl",
+  "which-boxed-primitive",
+  "which-builtin-type",
+  "which-collection",
+  "which-typed-array",
+  "word-wrap",
+  "wrappy",
+  "yallist",
+  "yocto-queue"
+];
 
 export default defineConfig({
-    plugins: [react(), glsl()],
-    build: {
-        minify: false,  // Disable minification
-        rollupOptions: {
-            input: {
-                index: './index.html',  // Correct the path as necessary
-            },
-            output: {
-                entryFileNames: `js/solar/solar.js`,
-                chunkFileNames: (chunkInfo) => {
-                    // Explicit naming based on chunk dependencies
-                    if (chunkInfo.name.startsWith('react') || chunkInfo.name.includes('fiber')) {
-                        return 'js/solar/depends/react.js';
-                    } else if (chunkInfo.name.includes('three')) {
-                        return 'js/solar/depends/three.js';
-                    }
-                    return `js/solar/solar.js`;
-                },
-                assetFileNames: ({ name, type }) => {
-                    if (name.endsWith('.css')) {
-                        // Use the original name for CSS files
-                        return `css/solar.css`;
-                    }
-				return `${type}/${name}`;
-                },
-
-				manualChunks(id) {
-					if (id.includes('node_modules')) {
-						if (id.includes('react') || id.includes('react-dom')) {
-							return 'react';
-						} else if (id.includes('three')) {
-							return 'three';
-						} else if (
-							id.includes('@react-three/fiber') ||
-							id.includes('@react-three/drei') ||
-							id.includes('@react-three/postprocessing') ||
-							id.includes('@react-three/rapier')
-						) {
-							return 'react-three';
-						}
-					}
-					return 'vendor';
-				}
-            },
+  plugins: [react(), glsl()],
+  build: {
+    minify: false, // Disable minification for debugging
+    rollupOptions: {
+      input: {
+        index: './index.html', // Main entry point
+      },
+      output: {
+        entryFileNames: 'js/solar/solar.js', // Main application script
+        chunkFileNames: 'js/solar/depends/[name].js', // Chunk files in js/solar/depends/
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name && assetInfo.name.endsWith('.css')) {
+            return 'css/solar.css'; // CSS output
+          }
+          return `assets/${assetInfo.name}`;
         },
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            const segments = id.split('node_modules/');
+            const packagePath = segments[segments.length - 1];
+            const parts = packagePath.split('/');
+
+            if (parts[0].startsWith('@')) {
+              // Replace `/` in scoped package names with `-` for compatibility
+              return `${parts[0].replace('@', '')}-${parts[1]}`;
+            }
+
+            return parts[0]; // Use package name for non-scoped packages
+          }
+        },
+      },
+      external: (id) => {
+        // Exclude all listed packages from being bundled
+        return excludedPackages.some((pkg) => id.includes(`node_modules/${pkg}`));
+      },
     },
+  },
 });
