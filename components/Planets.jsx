@@ -1,110 +1,52 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { InstancedRigidBodies } from '@react-three/rapier'
-import { Vector3 } from 'three'
+import React, { useState, useEffect } from 'react';
+import { Vector3 } from 'three';
+import { RigidBody } from '@react-three/rapier';
+import { calculateInitialPosition, calculateInitialVelocity } from '../utils/planetCalculations';
+import Planet from './Planet';
 
-import { calculateInitialPosition, calculateInitialVelocity } from '../utils/planetCalculations'
-import { useExplosion } from '../context/Explosions'
-import { useTrails } from '../context/Trails'
+const Planets = () => {
+    const [planetData, setPlanetData] = useState([]);
 
-import Planet from './Planet'
-
-// Planets component
-const Planets = ({ count = 14 }) => {
-    const { triggerExplosion } = useExplosion()
-    const { addTrailPoint, clearTrail } = useTrails()
-
-    const planetsRef = useRef()
-    const [planetCount, setPlanetCount] = useState(count)
-
-    // Planet props
-    const newPlanet = (respawn = false) => {
-        const key = 'instance_' + Math.random()
-        const position = calculateInitialPosition(respawn)
-        const linearVelocity = calculateInitialVelocity(position, respawn)
-        const scale = 0.5 + Math.random() * 1.5
-
-        return { key, position, linearVelocity, scale, userData: { type: 'Planet', key } }
-    }
-
-    // Set up the initial planet data
-    const planetData = useMemo(() => {
-        const planets = []
-        for (let i = 0; i < count; i++) {
-            planets.push(newPlanet())
-        }
-        return planets
-    }, [count])
-
-    // Update the planet count
     useEffect(() => {
-        // Set the planet count
-        setPlanetCount(planetsRef.current.length)
-
-        // add some initial spin to the planets
-        planetsRef.current.forEach((planet) => {
-            planet.setAngvel(new Vector3(0, Math.random() - 0.5, 0))
-        })
-    }, [planetsRef.current])
-
-    // Add a trail point for each planet
-    useFrame(() => {
-        planetsRef.current?.forEach((planet) => {
-            const position = planet.translation()
-            addTrailPoint(planet.userData.key, new Vector3(position.x, position.y, position.z))
-        })
-    })
-
-    // Handle collisions
-    const handleCollision = ({ manifold, target, other }) => {
-        console.log('Planet collision')
-
-        // get the mass of both objects
-        const targetMass = target.rigidBody.mass()
-        const otherMass = other.rigidBody.mass()
-
-        // If other object is more massive
-        if (otherMass > targetMass) {
-            // Get the collision and target positions
-            const targetPosition = target.rigidBody.translation()
-            const collisionWorldPosition = manifold.solverContactPoint(0)
-
-            // Get the velocities of both objects
-            const targetVelocity = target.rigidBody.linvel()
-            const otherVelocity = other.rigidBody.linvel()
-
-            // Calculate the combined velocity using conservation of momentum
-            const combinedMass = targetMass + otherMass
-            const combinedVelocity = new Vector3().addScaledVector(targetVelocity, targetMass).addScaledVector(otherVelocity, otherMass).divideScalar(combinedMass)
-
-            // Set the combined velocity to the other
-            if (other.rigidBody.userData.type === 'Planet') {
-                other.rigidBody.setLinvel(combinedVelocity)
-            }
-
-            // Clear trail of the target planet
-            clearTrail(target.rigidBody.userData.key)
-
-            // Trigger explosion.
-            triggerExplosion(
-                new Vector3(collisionWorldPosition.x, collisionWorldPosition.y, collisionWorldPosition.z),
-                new Vector3(targetPosition.x, targetPosition.y, targetPosition.z)
-            )
-
-            // Respawn the target planet
-            const newPlanetData = newPlanet(true)
-
-            target.rigidBody.userData.key = newPlanetData.key
-            target.rigidBody.setTranslation(newPlanetData.position)
-            target.rigidBody.setLinvel(newPlanetData.linearVelocity)
-        }
-    }
+        const planetsInfo = [
+            { name: 'Mercury', texture: 'js/solar/textures/mercury.jpg', scale: 0.383 },
+            { name: 'Venus', texture: 'js/solar/textures/venus.jpg', scale: 0.949 },
+            { name: 'Earth', texture: 'js/solar/textures/earth.jpg', scale: 1.00 },
+            { name: 'Mars', texture: 'js/solar/textures/mars.jpg', scale: 0.532 },
+            { name: 'Jupiter', texture: 'js/solar/textures/jupiter.jpg', scale: 11.21 },
+            { name: 'Saturn', texture: 'js/solar/textures/saturn.jpg', scale: 9.45 },
+            { name: 'Uranus', texture: 'js/solar/textures/uranus.jpg', scale: 4.01 },
+            { name: 'Neptune', texture: 'js/solar/textures/neptune.jpg', scale: 3.88 }
+        ];
+        setPlanetData(planetsInfo.map(info => {
+            const position = calculateInitialPosition();
+            const velocity = calculateInitialVelocity(position);
+            return {
+                ...info,
+                position: position.toArray(),
+                linearVelocity: velocity.toArray()
+            };
+        }));
+    }, []);
 
     return (
-        <InstancedRigidBodies ref={planetsRef} instances={planetData} colliders='ball' onCollisionEnter={handleCollision}>
-            <Planet count={planetCount} />
-        </InstancedRigidBodies>
-    )
-}
+        <>
+            {planetData.map(planet => (
+                <RigidBody
+                    key={planet.name}
+                    position={planet.position}
+                    linearVelocity={planet.linearVelocity}
+                    angularDamping={0.5}
+                >
+                    <Planet
+                        name={planet.name}
+                        texturePath={planet.texturePath}
+                        scale={planet.scale}
+                    />
+                </RigidBody>
+            ))}
+        </>
+    );
+};
 
-export default Planets
+export default Planets;
