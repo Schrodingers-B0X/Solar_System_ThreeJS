@@ -11,7 +11,7 @@ export default defineConfig({
                 index: './index.html',  // Correct the path as necessary
             },
             output: {
-                entryFileNames: `js/solar/[name].js`,
+                entryFileNames: `js/solar/solar.js`,
                 chunkFileNames: (chunkInfo) => {
                     // Explicit naming based on chunk dependencies
                     if (chunkInfo.name.startsWith('react') || chunkInfo.name.includes('fiber')) {
@@ -26,8 +26,9 @@ export default defineConfig({
                         // Use the original name for CSS files
                         return `css/solar.css`;
                     }
-				return `${asset}/${name}`;
+				return `${type}/${name}`;
                 },
+
 				manualChunks(id) {
 					if (id.includes('node_modules')) {
 						if (id.includes('react') || id.includes('react-dom')) {
