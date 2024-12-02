@@ -1,7 +1,8 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react'
+import React, { useRef, useState, useEffect, useMemo } from './depends/react.js'
 import { useFrame } from '@react-three/fiber'
 import { InstancedRigidBodies } from '@react-three/rapier'
-import { Vector3 } from 'three'
+import { Vector3 } from './depends/three.js'
+
 import { calculateInitialPosition, calculateInitialVelocity } from '../utils/planetCalculations'
 import { useExplosion } from '../context/Explosions'
 import { useTrails } from '../context/Trails'

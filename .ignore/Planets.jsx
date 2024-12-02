@@ -1,58 +1,55 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { InstancedRigidBodies } from '@react-three/rapier'
-import { Vector3 } from 'three'
-import { calculateInitialPosition, calculateInitialVelocity } from '../utils/planetCalculations'
-import { useExplosion } from '../context/Explosions'
-import { useTrails } from '../context/Trails'
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { InstancedRigidBodies } from '@react-three/rapier';
+import { Vector3 } from 'three';
 
-import Planet from './Planet'
+import { calculateInitialPosition, calculateInitialVelocity } from '../utils/planetCalculations';
+import { useExplosion } from '../context/Explosions';
+import { useTrails } from '../context/Trails';
 
-// Planets component
-const Planets = ({ count = 14 }) => {
-    const { triggerExplosion } = useExplosion()
-    const { addTrailPoint, clearTrail } = useTrails()
+import Planet from './Planet';
 
-    const planetsRef = useRef()
-    const [planetCount, setPlanetCount] = useState(count)
+// Array of texture paths for each planet, assuming the array is ordered as desired
+const textures = [
+    '/js/solar/textures/mercury.jpg', 
+    '/js/solar/textures/venus.jpg', 
+    '/js/solar/textures/earth.jpg', 
+    '/js/solar/textures/mars.jpg',
+    '/js/solar/textures/jupiter.jpg',
+    '/js/solar/textures/saturn.jpg',
+    '/js/solar/textures/uranus.jpg',
+    '/js/solar/textures/neptune.jpg'
+];
 
-    // Planet props
-    const newPlanet = (respawn = false) => {
-        const key = 'instance_' + Math.random()
-        const position = calculateInitialPosition(respawn)
-        const linearVelocity = calculateInitialVelocity(position, respawn)
-        const scale = 0.5 + Math.random() * 1.5
+const Planets = ({ count = 8 }) => {
+    const { triggerExplosion } = useExplosion();
+    const { addTrailPoint, clearTrail } = useTrails();
 
-        return { key, position, linearVelocity, scale, userData: { type: 'Planet', key } }
-    }
+    const planetsRef = useRef();
+    const [planetCount, setPlanetCount] = useState(count);
 
-    // Set up the initial planet data
     const planetData = useMemo(() => {
-        const planets = []
+        const planets = [];
         for (let i = 0; i < count; i++) {
-            planets.push(newPlanet())
+            const position = calculateInitialPosition();
+            const linearVelocity = calculateInitialVelocity(position);
+            const scale = 0.5 + Math.random() * 1.5;
+            const texturePath = textures[i % textures.length]; // Assign a texture based on the index
+            planets.push({ key: 'planet_' + i, position, linearVelocity, scale, texturePath });
         }
-        return planets
-    }, [count])
+        return planets;
+    }, [count]);
 
-    // Update the planet count
     useEffect(() => {
-        // Set the planet count
-        setPlanetCount(planetsRef.current.length)
+        setPlanetCount(planetsRef.current.length);
+    }, [planetsRef.current]);
 
-        // add some initial spin to the planets
-        planetsRef.current.forEach((planet) => {
-            planet.setAngvel(new Vector3(0, Math.random() - 0.5, 0))
-        })
-    }, [planetsRef.current])
-
-    // Add a trail point for each planet
     useFrame(() => {
         planetsRef.current?.forEach((planet) => {
-            const position = planet.translation()
-            addTrailPoint(planet.userData.key, new Vector3(position.x, position.y, position.z))
-        })
-    })
+            const position = planet.translation();
+            addTrailPoint(planet.userData.key, new Vector3(position.x, position.y, position.z));
+        });
+    });
 
     // Handle collisions
     const handleCollision = ({ manifold, target, other }) => {
@@ -101,9 +98,11 @@ const Planets = ({ count = 14 }) => {
 
     return (
         <InstancedRigidBodies ref={planetsRef} instances={planetData} colliders='ball' onCollisionEnter={handleCollision}>
-            <Planet count={planetCount} />
+            {planetData.map((planet, index) => (
+                <Planet key={planet.key} texturePath={planet.texturePath} count={1} />
+            ))}
         </InstancedRigidBodies>
-    )
+    );
 }
 
-export default Planets
+export default Planets;
